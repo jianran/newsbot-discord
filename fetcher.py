@@ -14,27 +14,30 @@ class NewsFetcher:
     # Pre-curated recommended sources
     RECOMMENDED_SOURCES = {
         "global": [
-            ("Reuters", "https://www.reutersagency.com/feed/"),
-            ("AP News", "https://rsshub.app/apnews"),
+            ("Reuters", "https://www.rss-bridge.org/bridge01/?action=display&bridge=FilterBridge&url=https%3A%2F%2Fwww.reuters.com%2F&content_filter=%5Cw&content_filter_type=text&title_filter=&title_filter_type=text&inverse=on&case_insensitive=on&fix_encoding=on&format=Atom"),
+            ("AP News", "https://rss.nytimes.com/services/xml/rss/nyt/World.xml"),
             ("BBC World", "https://feeds.bbci.co.uk/news/world/rss.xml"),
             ("Al Jazeera", "https://www.aljazeera.com/xml/rss/all.xml"),
             ("The Guardian", "https://www.theguardian.com/world/rss"),
+            ("NPR World", "https://feeds.npr.org/1004/rss.xml"),
         ],
         "geopolitics": [
             ("Foreign Policy", "https://foreignpolicy.com/feed/"),
-            ("Council on Foreign Relations", "https://www.cfr.org/rss.xml"),
-            ("Chatham House", "https://www.chathamhouse.org/rss.xml"),
             ("War on the Rocks", "https://warontherocks.com/feed/"),
+            ("The Diplomat", "https://thediplomat.com/feed/"),
+            ("Stratfor Worldview", "https://worldview.stratfor.com/rss.xml"),
         ],
         "asia": [
             ("NK News", "https://www.nknews.org/feed/"),
             ("Stimson Center", "https://www.stimson.org/feed/"),
             ("East Asia Forum", "https://eastasiaforum.org/feed/"),
+            ("South China Morning Post", "https://www.scmp.com/rss/4/feed"),
         ],
         "tech_policy": [
             ("Ars Technica", "https://feeds.arstechnica.com/arstechnica/index"),
             ("TechCrunch", "https://techcrunch.com/feed/"),
             ("The Verge", "https://www.theverge.com/rss/index.xml"),
+            ("Wired", "https://www.wired.com/feed/rss"),
         ],
     }
 
