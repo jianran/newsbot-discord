@@ -1,16 +1,16 @@
 """NewsBot — Discord bot for personal AI-powered news briefings.
 
 Commands:
-  /brief        — Generate a briefing now
-  /add <url>    — Add an RSS news source
-  /remove <id>  — Remove a source by ID
-  /sources      — List your sources
-  /recommend    — Browse recommended sources
-  /schedule     — Set daily briefing time
-  /track        — Track a topic over time
-  /untrack      — Stop tracking a topic
-  /read <url>   — AI summarizes an article
-  /help         — Show all commands
+  /brief       — Generate a briefing now
+  /add <url>   — Add an RSS news source
+  /remove <id> — Remove a source by ID
+  /sources     — List your sources
+  /recommend   — Browse recommended sources
+  /schedule    — Set daily briefing time
+  /track       — Track a topic over time
+  /untrack     — Stop tracking a topic
+  /read <url>  — AI summarizes an article
+  /help        — Show all commands
 """
 
 import os
@@ -73,7 +73,6 @@ class NewsBot(discord.Client):
                     member = await self.fetch_user(int(discord_id))
                     if member:
                         briefing = await self.briefer.generate(discord_id)
-                        # Discord has 2000 char limit
                         for chunk in self._chunk_text(briefing, 1900):
                             await member.send(chunk)
                         logger.info(f"Briefing sent to {discord_id}")
@@ -100,7 +99,7 @@ tree = client.tree
 
 # ===== COMMANDS =====
 
-@tree.command(name="brief", description="🌅 지금 뉴스 브리핑을 받습니다")
+@tree.command(name="brief", description="🌅 Generate a news briefing now")
 async def cmd_brief(interaction: discord.Interaction):
     await interaction.response.defer()
     await create_user(str(interaction.user.id))
@@ -110,7 +109,7 @@ async def cmd_brief(interaction: discord.Interaction):
         await interaction.followup.send(chunk)
 
 
-@tree.command(name="add", description="📡 RSS 뉴스 소스를 추가합니다")
+@tree.command(name="add", description="📡 Add an RSS news source")
 @app_commands.describe(url="RSS feed URL")
 async def cmd_add(interaction: discord.Interaction, url: str):
     await interaction.response.defer()
@@ -120,53 +119,53 @@ async def cmd_add(interaction: discord.Interaction, url: str):
     items = await client.fetcher.fetch_feed(url, max_items=1)
     if not items:
         await interaction.followup.send(
-            "❌ 유효한 RSS 피드가 아닙니다. URL을 확인해주세요.\n"
-            "`/recommend`로 추천 소스를 확인하세요."
+            "❌ Not a valid RSS feed. Check the URL.\n"
+            "Use `/recommend` to browse curated sources."
         )
         return
 
     name = items[0].get("source", url.split("/")[2])
     await add_source(str(interaction.user.id), name, url)
     await interaction.followup.send(
-        f"✅ **{name}** 추가 완료!\n"
-        f"`/brief`로 지금 브리핑을 받아보세요."
+        f"✅ **{name}** added!\n"
+        f"Run `/brief` to get your briefing now."
     )
 
 
-@tree.command(name="remove", description="🗑️ 뉴스 소스를 제거합니다")
-@app_commands.describe(source_id="source 번호 (/sources로 확인)")
+@tree.command(name="remove", description="🗑️ Remove a news source")
+@app_commands.describe(source_id="Source ID (check /sources)")
 async def cmd_remove(interaction: discord.Interaction, source_id: int):
     success = await remove_source(source_id, str(interaction.user.id))
     if success:
-        await interaction.response.send_message("✅ 소스가 제거되었습니다.")
+        await interaction.response.send_message("✅ Source removed.")
     else:
-        await interaction.response.send_message("❌ 해당 소스를 찾을 수 없습니다.")
+        await interaction.response.send_message("❌ Source not found.")
 
 
-@tree.command(name="sources", description="📋 내 뉴스 소스 목록을 확인합니다")
+@tree.command(name="sources", description="📋 List your news sources")
 async def cmd_sources(interaction: discord.Interaction):
     sources = await get_sources(str(interaction.user.id))
     if not sources:
         await interaction.response.send_message(
-            "📭 **등록된 뉴스 소스가 없습니다.**\n"
-            "`/recommend`로 추천 소스를 추가하거나\n"
-            "`/add <rss_url>`로 직접 추가하세요."
+            "📭 **No news sources yet.**\n"
+            "Use `/recommend` to browse curated sources or\n"
+            "`/add <rss_url>` to add your own."
         )
         return
 
-    lines = ["📡 **내 뉴스 소스**\n"]
+    lines = ["📡 **My News Sources**\n"]
     for s in sources:
         lines.append(f"`{s['id']:2d}` ─ **{s['name']}** ({s['category']})")
         lines.append(f"       <{s['url']}>")
 
-    lines.append(f"\n총 {len(sources)}개의 소스")
+    lines.append(f"\nTotal: {len(sources)} sources")
     await interaction.response.send_message("\n".join(lines))
 
 
-@tree.command(name="recommend", description="🌟 추천 뉴스 소스를 구독합니다")
+@tree.command(name="recommend", description="🌟 Browse and subscribe to curated news sources")
 @app_commands.describe(
-    category="카테고리 (global / geopolitics / asia / tech_policy)",
-    name="소스 이름 (선택 — 비우면 목록 표시)"
+    category="Category (global / geopolitics / asia / tech_policy)",
+    name="Source name (optional — leave empty to list)"
 )
 async def cmd_recommend(interaction: discord.Interaction,
                          category: str = None,
@@ -174,42 +173,40 @@ async def cmd_recommend(interaction: discord.Interaction,
     await create_user(str(interaction.user.id))
 
     if name and category:
-        # Subscribe to specific source
         sources = client.fetcher.RECOMMENDED_SOURCES.get(category, [])
         found = [s for s in sources if s[0].lower() == name.lower()]
         if found:
             await add_source(str(interaction.user.id), found[0][0], found[0][1], category)
             await interaction.response.send_message(
-                f"✅ **{found[0][0]}** 추가 완료!"
+                f"✅ **{found[0][0]}** added!"
             )
         else:
             await interaction.response.send_message(
-                f"❌ '{name}'을(를) '{category}'에서 찾을 수 없습니다.\n"
-                f"`/recommend {category}`로 목록을 확인하세요."
+                f"❌ Could not find '{name}' in '{category}'.\n"
+                f"Run `/recommend {category}` to see the list."
             )
         return
 
     if category:
         sources = client.fetcher.RECOMMENDED_SOURCES.get(category, [])
-        lines = [f"🌟 **{category}** 소스 목록\n"]
+        lines = [f"🌟 **{category}** sources\n"]
         for s_name, s_url in sources:
             lines.append(f"• **{s_name}**")
-            lines.append(f"  `/recommend {category}:{s_name}` 으로 추가")
+            lines.append(f"  Run `/recommend {category}:{s_name}` to add")
         await interaction.response.send_message("\n".join(lines))
         return
 
-    # Show categories
     categories = [
-        ("global", "🌍 국제 뉴스"),
-        ("geopolitics", "🌐 지정학"),
-        ("asia", "🌏 아시아"),
-        ("tech_policy", "💻 기술/정책"),
+        ("global", "🌍 Global News"),
+        ("geopolitics", "🌐 Geopolitics"),
+        ("asia", "🌏 Asia"),
+        ("tech_policy", "💻 Tech / Policy"),
     ]
-    lines = ["🌟 **추천 뉴스 소스 카테고리**\n"]
+    lines = ["🌟 **Curated News Sources**\n"]
     for cat_id, cat_name in categories:
         count = len(client.fetcher.RECOMMENDED_SOURCES.get(cat_id, []))
-        lines.append(f"`/recommend {cat_id}` ─ {cat_name} ({count}개 소스)")
-    lines.append("\n각 카테고리를 선택한 후 소스 이름을 입력하세요.")
+        lines.append(f"`/recommend {cat_id}` ─ {cat_name} ({count} sources)")
+    lines.append("\nPick a category, then choose a source by name.")
     await interaction.response.send_message("\n".join(lines))
 
 
@@ -224,7 +221,6 @@ async def recommend_category_autocomplete(interaction: discord.Interaction, curr
 
 @cmd_recommend.autocomplete("name")
 async def recommend_name_autocomplete(interaction: discord.Interaction, current: str):
-    # Get the category from the current options
     options = interaction.data.get("options", [])
     cat = next((o["value"] for o in options if o.get("name") == "category"), "")
     sources = client.fetcher.RECOMMENDED_SOURCES.get(cat, [])
@@ -234,111 +230,109 @@ async def recommend_name_autocomplete(interaction: discord.Interaction, current:
     ][:25]
 
 
-@tree.command(name="schedule", description="⏰ 브리핑 시간을 설정합니다 (24h, UTC)")
+@tree.command(name="schedule", description="⏰ Set daily briefing time (24h UTC)")
 @app_commands.describe(
-    time="브리핑 시간 (예: 07:00 또는 18:30)",
-    timezone="시간대 (예: Asia/Seoul, US/Eastern, UTC)"
+    time="Briefing time (e.g. 07:00 or 18:30)",
+    timezone="Timezone (e.g. Asia/Seoul, US/Eastern, UTC)"
 )
 async def cmd_schedule(interaction: discord.Interaction, time: str, timezone: str = "UTC"):
     await create_user(str(interaction.user.id))
 
-    # Validate time format
     try:
         datetime.strptime(time, "%H:%M")
     except ValueError:
         await interaction.response.send_message(
-            "❌ 시간 형식이 잘못되었습니다. `07:00` 또는 `18:30` 형식으로 입력하세요."
+            "❌ Invalid time format. Use `07:00` or `18:30`."
         )
         return
 
     await update_user(str(interaction.user.id), briefing_time=time, timezone=timezone)
-    utc_time = time
     local_name = timezone if timezone != "UTC" else "UTC"
 
     await interaction.response.send_message(
-        f"✅ **브리핑 시간 설정 완료!**\n"
-        f"   매일 {utc_time} UTC ({local_name})에 DM으로 브리핑을 보내드립니다.\n\n"
-        f"💡 `/brief`로 지금 바로 받아볼 수도 있습니다."
+        f"✅ **Briefing time set!**\n"
+        f"   Daily at {time} UTC ({local_name}) — I'll DM you the briefing.\n\n"
+        f"💡 Use `/brief` to get one right now."
     )
 
 
-@tree.command(name="track", description="📌 관심 주제를 추적합니다")
-@app_commands.describe(topic="추적할 주제 (예: Ukraine, Taiwan, AI regulation)")
+@tree.command(name="track", description="📌 Track a topic over time")
+@app_commands.describe(topic="Topic to track (e.g. Ukraine, Taiwan, AI regulation)")
 async def cmd_track(interaction: discord.Interaction, topic: str):
     await create_user(str(interaction.user.id))
     await add_track(str(interaction.user.id), topic)
     await interaction.response.send_message(
-        f"✅ **'{topic}'** 주제 추적을 시작합니다.\n"
-        f"이 주제의 새 기사가 발견되면 알려드립니다."
+        f"✅ Now tracking **'{topic}'**.\n"
+        f"I'll flag new articles and show how the story evolves."
     )
 
 
-@tree.command(name="untrack", description="⛔ 주제 추적을 중단합니다")
-@app_commands.describe(topic="중단할 주제")
+@tree.command(name="untrack", description="⛔ Stop tracking a topic")
+@app_commands.describe(topic="Topic to stop tracking")
 async def cmd_untrack(interaction: discord.Interaction, topic: str):
     success = await remove_track(str(interaction.user.id), topic)
     if success:
-        await interaction.response.send_message(f"✅ **'{topic}'** 추적이 중단되었습니다.")
+        await interaction.response.send_message(f"✅ Stopped tracking **'{topic}'**.")
     else:
         await interaction.response.send_message(
-            f"❌ **'{topic}'** 추적 기록이 없습니다.\n"
-            f"`/track <주제>`로 새 주제를 추적하세요."
+            f"❌ Not currently tracking **'{topic}'**.\n"
+            f"Use `/track <topic>` to start."
         )
 
 
-@tree.command(name="read", description="📖 AI가 기사를 요약해줍니다")
-@app_commands.describe(url="기사 URL")
+@tree.command(name="read", description="📖 AI summarizes an article for you")
+@app_commands.describe(url="Article URL")
 async def cmd_read(interaction: discord.Interaction, url: str):
     await interaction.response.defer()
 
     if not client.llm.enabled:
         await interaction.followup.send(
-            "⚠️ LLM API 키가 설정되지 않았습니다. `.env` 파일에 `LLM_API_KEY`를 추가하세요."
+            "⚠️ LLM API key not configured. Add `LLM_API_KEY` to `.env`."
         )
         return
 
     text = await client.fetcher.fetch_article_text(url)
     if not text:
-        await interaction.followup.send("❌ 기사를 불러올 수 없습니다.")
+        await interaction.followup.send("❌ Could not load the article.")
         return
 
     summary = await client.llm.summarize("Article", text[:3000], url)
     context = await client.llm.why_it_matters("Article", text[:2000])
 
     lines = [
-        f"📖 **기사 요약**\n",
-        f"📝 {summary}" if summary else "📝 요약을 생성할 수 없습니다.",
+        f"📖 **Article Summary**\n",
+        f"📝 {summary}" if summary else "📝 Could not generate a summary.",
         "",
     ]
     if context:
-        lines.append(f"💡 **맥락:** {context}")
+        lines.append(f"💡 **Context:** {context}")
         lines.append("")
 
     lines.append(f"🔗 <{url}>")
     await interaction.followup.send("\n".join(lines))
 
 
-@tree.command(name="help", description="📚 모든 명령어를 확인합니다")
+@tree.command(name="help", description="📚 Show all commands")
 async def cmd_help(interaction: discord.Interaction):
     lines = [
-        "🌅 **NewsBot — AI 뉴스 브리핑 봇**",
+        "🌅 **NewsBot — AI News Briefing**",
         "",
-        "**명령어**",
-        "`/brief` — 지금 브리핑 생성",
-        "`/add <rss_url>` — RSS 소스 추가",
-        "`/remove <id>` — 소스 제거",
-        "`/sources` — 내 소스 목록",
-        "`/recommend [category]` — 추천 소스 구독",
-        "`/schedule <time>` — 매일 브리핑 시간 설정",
-        "`/track <topic>` — 주제 추적",
-        "`/untrack <topic>` — 추적 중단",
-        "`/read <url>` — 기사 요약",
+        "**Commands**",
+        "`/brief` — Generate briefing now",
+        "`/add <rss_url>` — Add RSS source",
+        "`/remove <id>` — Remove source",
+        "`/sources` — List your sources",
+        "`/recommend [category]` — Browse curated sources",
+        "`/schedule <time>` — Set daily briefing time",
+        "`/track <topic>` — Track a story topic",
+        "`/untrack <topic>` — Stop tracking",
+        "`/read <url>` — AI-summarize an article",
         "",
-        "**💡 사용법**",
-        "1. `/recommend global` → Reuters, BBC, AP 추가",
-        "2. `/schedule 07:00` → 매일 아침 7시 브리핑",
-        "3. `/track Ukraine` → 우크라이나 관련 기사 추적",
-        "4. `/brief` → 지금 바로 받아보기",
+        "**💡 Quick Start**",
+        "1. `/recommend global` → add Reuters, BBC, AP",
+        "2. `/schedule 07:00` → daily at 7 AM",
+        "3. `/track Ukraine` → track story evolution",
+        "4. `/brief` → get a briefing right now",
     ]
     await interaction.response.send_message("\n".join(lines))
 

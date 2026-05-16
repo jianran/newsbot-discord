@@ -21,22 +21,19 @@ class BriefingGenerator:
         sources = await get_sources(discord_id)
         if not sources:
             return (
-                "📭 **아직 뉴스 소스가 없어요!**\n"
-                "`/sources`로 추천 소스를 구독하거나\n"
-                "`/add <rss_url>`로 직접 추가하세요."
+                "📭 **No news sources yet!**\n"
+                "Use `/recommend` to subscribe to curated sources, or\n"
+                "`/add <rss_url>` to add your own."
             )
 
-        # Fetch all sources
         urls = [s["url"] for s in sources]
         articles = await self.fetcher.fetch_multiple(urls, max_per_feed=10)
 
         if not articles:
-            return "📭 오늘은 새로운 소식이 없습니다."
+            return "📭 No fresh news today."
 
-        # Limit to top 15 for briefing
         articles = articles[:15]
 
-        # Build briefing
         lines = [self._header(articles)]
         lines.append("")
 
@@ -51,7 +48,7 @@ class BriefingGenerator:
 
     async def generate_topic_brief(self, articles: list) -> str:
         """Generate a thematic briefing for a tracked topic."""
-        lines = ["📌 **주제별 브리핑**\n"]
+        lines = ["📌 **Topic Briefing**\n"]
 
         for i, article in enumerate(articles[:8], 1):
             summary = None
@@ -62,15 +59,14 @@ class BriefingGenerator:
 
             lines.append(
                 f"**{i}. {article['title']}**\n"
-                f"   출처: {article['source']}\n"
+                f"   Source: {article['source']}\n"
                 f"   {summary or article.get('summary', '')[:200]}\n"
             )
 
-        # Check for tension between sources
         if len(articles) >= 2:
             tension = await self.llm.detect_tension(articles)
             if tension:
-                lines.append(f"⚡ **관점 차이 / 모순:**\n{tension}\n")
+                lines.append(f"⚡ **Framing differences / contradictions:**\n{tension}\n")
 
         return "\n".join(lines)
 
@@ -79,14 +75,13 @@ class BriefingGenerator:
         blocks = []
         emoji = NARRATORS[index % len(NARRATORS)]
 
-        # Summarize
         summary = None
         context = None
         if article.get("content"):
             summary = await self.llm.summarize(
                 article["title"], article["content"][:2000], article["source"]
             )
-            if index < 5:  # Top stories get context
+            if index < 5:
                 context = await self.llm.why_it_matters(
                     article["title"], article["content"][:2000]
                 )
@@ -112,7 +107,6 @@ class BriefingGenerator:
 
         blocks.append(f"  🔗 <{article['url']}>")
 
-        # Save to DB
         await save_story(
             url=article["url"],
             title=article["title"],
@@ -127,12 +121,12 @@ class BriefingGenerator:
     def _header(self, articles: list) -> str:
         """Generate briefing header."""
         now = datetime.now(timezone.utc)
-        date_str = now.strftime("%Y년 %m월 %d일 (%A)")
+        date_str = now.strftime("%A, %B %d, %Y")
         article_count = len(articles)
 
         lines = [
-            f"🌅 **굿모닝! 오늘의 뉴스 브리핑**",
-            f"   {date_str} · {article_count}개의 기사",
+            f"🌅 **Good morning! Your Daily Briefing**",
+            f"   {date_str} · {article_count} articles",
             "",
             f"   {'─' * 30}",
         ]
@@ -142,8 +136,8 @@ class BriefingGenerator:
         """Generate briefing footer."""
         return (
             "───\n"
-            "💡 **명령어:** `/brief` 지금 브리핑 · `/track <주제>` 주제 추적\n"
-            "🔧 `/source` 소스 관리 · `/schedule` 브리핑 시간 설정"
+            "💡 **Commands:** `/brief` now · `/track <topic>` follow a story\n"
+            "🔧 `/source` manage sources · `/schedule` set briefing time"
         )
 
 
