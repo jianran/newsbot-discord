@@ -38,6 +38,18 @@ class NewsFetcher:
             ("TechCrunch", "https://techcrunch.com/feed/"),
             ("The Verge", "https://www.theverge.com/rss/index.xml"),
             ("Wired", "https://www.wired.com/feed/rss"),
+            ("Hacker News", "https://hnrss.org/frontpage"),
+            ("The Register", "https://www.theregister.com/headlines.rss"),
+            ("MIT Technology Review", "https://www.technologyreview.com/feed/"),
+            ("IEEE Spectrum", "https://spectrum.ieee.org/rss/fulltext"),
+            ("VentureBeat", "https://feeds.feedburner.com/venturebeat/SZYF"),
+            ("ZDNet", "https://www.zdnet.com/news/rss.xml"),
+        ],
+        "ai_ml": [
+            ("OpenAI Blog", "https://openai.com/blog/rss.xml"),
+            ("DeepMind Blog", "https://www.deepmind.com/blog/rss.xml"),
+            ("Google Research", "https://blog.research.google/feed/"),
+            ("Hugging Face Blog", "https://huggingface.co/blog/feed.xml"),
         ],
     }
 

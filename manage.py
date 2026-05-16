@@ -110,6 +110,10 @@ async def main():
         await cmd_recommend("global")
     elif cmd == "recommend-geopolitics":
         await cmd_recommend("geopolitics")
+    elif cmd == "recommend-tech":
+        await cmd_recommend("tech_policy")
+    elif cmd == "recommend-ai":
+        await cmd_recommend("ai_ml")
     else:
         print(f"Unknown command: {cmd}")
         print(__doc__)

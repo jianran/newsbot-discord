@@ -201,6 +201,7 @@ async def cmd_recommend(interaction: discord.Interaction,
         ("geopolitics", "🌐 Geopolitics"),
         ("asia", "🌏 Asia"),
         ("tech_policy", "💻 Tech / Policy"),
+        ("ai_ml", "🤖 AI / ML"),
     ]
     lines = ["🌟 **Curated News Sources**\n"]
     for cat_id, cat_name in categories:
@@ -212,7 +213,7 @@ async def cmd_recommend(interaction: discord.Interaction,
 
 @cmd_recommend.autocomplete("category")
 async def recommend_category_autocomplete(interaction: discord.Interaction, current: str):
-    cats = ["global", "geopolitics", "asia", "tech_policy"]
+    cats = ["global", "geopolitics", "asia", "tech_policy", "ai_ml"]
     return [
         app_commands.Choice(name=c, value=c)
         for c in cats if current.lower() in c
